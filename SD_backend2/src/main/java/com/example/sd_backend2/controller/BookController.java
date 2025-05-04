@@ -5,6 +5,7 @@ import com.example.sd_backend2.repository.AuthorRepository;
 import com.example.sd_backend2.service.BookService; // Import the BookService
 import com.example.sd_backend2.service.NotificationHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,8 +31,6 @@ public class BookController {
         BookRequestDTO createdBook = bookService.createBook(bookRequest, username);
 
         Long authorId = authorRepository.findByName(username).getAuthorId();
-//        notificationService.notifySubscribersOfNewPublication(authorId);
-
         return ResponseEntity.ok(createdBook);
     }
 
@@ -72,5 +71,15 @@ public class BookController {
         } catch (ResponseStatusException e) {
             return new ResponseEntity<>(e.getReason(), e.getStatusCode());
         }
+    }
+
+
+    @GetMapping(value = "/{id}/export", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<BookRequestDTO> exportBookAsXml(@PathVariable Long id) {
+        BookRequestDTO dto = bookService.getBookById(id);
+        if (dto == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(dto);
     }
 }

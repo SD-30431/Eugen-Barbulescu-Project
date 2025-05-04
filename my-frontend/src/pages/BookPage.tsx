@@ -1,3 +1,5 @@
+// src/pages/BookPage.tsx
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -30,10 +32,11 @@ interface CommentDTO {
     commentStr: string;
 }
 
-const BookPage = () => {
-    const { bookId } = useParams();
+const BookPage: React.FC = () => {
+    const { bookId } = useParams<{ bookId: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
+
     const [book, setBook] = useState<Book | null>(null);
     const [reviews, setReviews] = useState<ReviewDTO[]>([]);
     const [comments, setComments] = useState<CommentDTO[]>([]);
@@ -43,32 +46,37 @@ const BookPage = () => {
 
     useEffect(() => {
         if (!user) return;
+
         const fetchData = async () => {
             try {
-                const bookRes = await axios.get<Book>(`http://localhost:8080/api/books/${bookId}`, {
-                    headers: { Authorization: `Bearer ${user.token}` },
-                });
+                const [bookRes, reviewsRes, commentsRes] = await Promise.all([
+                    axios.get<Book>(`http://localhost:8080/api/books/${bookId}`, {
+                        headers: { Authorization: `Bearer ${user.token}` },
+                    }),
+                    axios.get<ReviewDTO[]>(`http://localhost:8080/api/reviews/books/${bookId}`, {
+                        headers: { Authorization: `Bearer ${user.token}` },
+                    }),
+                    axios.get<CommentDTO[]>(`http://localhost:8080/api/comments/books/${bookId}`, {
+                        headers: { Authorization: `Bearer ${user.token}` },
+                    }),
+                ]);
+
                 setBook(bookRes.data);
-
-                const reviewsRes = await axios.get<ReviewDTO[]>(`http://localhost:8080/api/reviews/books/${bookId}`, {
-                    headers: { Authorization: `Bearer ${user.token}` },
-                });
                 setReviews(reviewsRes.data);
-
-                const commentsRes = await axios.get<CommentDTO[]>(`http://localhost:8080/api/comments/books/${bookId}`, {
-                    headers: { Authorization: `Bearer ${user.token}` },
-                });
                 setComments(commentsRes.data);
             } catch (err) {
                 console.error(err);
                 setError('Error fetching book data');
             }
         };
+
         fetchData();
     }, [bookId, user]);
 
     const handleReviewSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (!user) return;
+
         try {
             const res = await axios.post<ReviewDTO>(
                 `http://localhost:8080/api/reviews/books/${bookId}`,
@@ -85,10 +93,12 @@ const BookPage = () => {
 
     const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (!user) return;
+
         try {
             const res = await axios.post<CommentDTO>(
                 `http://localhost:8080/api/comments/books/${bookId}`,
-                { commentString: commentText }, // note: "commentString" is used per our DTO
+                { commentString: commentText },
                 { headers: { Authorization: `Bearer ${user.token}` } }
             );
             setComments([...comments, res.data]);
@@ -99,26 +109,61 @@ const BookPage = () => {
         }
     };
 
+    const handleDownloadXml = async () => {
+        if (!user) return;
+
+        try {
+            const res = await axios.get(
+                `http://localhost:8080/api/books/${bookId}/export`,
+                {
+                    headers: { Authorization: `Bearer ${user.token}` },
+                    responseType: 'blob',
+                }
+            );
+            const blob = new Blob([res.data], { type: 'application/xml' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `book-${bookId}.xml`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error(err);
+            setError('Failed to download XML');
+        }
+    };
+
     return (
         <div style={{ padding: '20px' }}>
             <button onClick={() => navigate('/')}>Back</button>
             {error && <p style={{ color: 'red' }}>{error}</p>}
+
             {book ? (
                 <div>
                     <h1>{book.title}</h1>
                     <p>By: {book.authorName}</p>
+
                     {user && book.authorId === user.authorId && (
-                        <button onClick={() => navigate(`/books/${book.bookId}/edit`)}>
-                            Edit Book
-                        </button>
+                        <>
+                            <button onClick={() => navigate(`/books/${book.bookId}/edit`)}>
+                                Edit Book
+                            </button>
+                            <button
+                                onClick={handleDownloadXml}
+                                style={{ marginLeft: '8px' }}
+                            >
+                                Download XML
+                            </button>
+                        </>
                     )}
+
                     <div>
                         <h2>Reviews</h2>
                         {reviews.length > 0 ? (
                             reviews.map((review) => (
-                                <div key={review.reviewId}>
-                                    {review.rating} Stars
-                                </div>
+                                <div key={review.reviewId}>{review.rating} Stars</div>
                             ))
                         ) : (
                             <p>No reviews yet.</p>
@@ -136,13 +181,12 @@ const BookPage = () => {
                             <button type="submit">Submit Review</button>
                         </form>
                     </div>
+
                     <div>
                         <h2>Comments</h2>
                         {comments.length > 0 ? (
-                            comments.map((comment) => (
-                                <div key={comment.commentId}>
-                                    {comment.commentStr}
-                                </div>
+                            comments.map((c) => (
+                                <div key={c.commentId}>{c.commentStr}</div>
                             ))
                         ) : (
                             <p>No comments yet.</p>

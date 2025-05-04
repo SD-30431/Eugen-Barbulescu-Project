@@ -10,7 +10,6 @@ export function useWebsocketChat(urlBase: string) {
     const [isConnected, setIsConnected] = useState(false);
     const [chatMessages, setChatMessages] = useState<string[]>([]);
 
-    // send + locally record the plain string
     const sendChatMessage = useCallback((message: string) => {
         const ws = wsRef.current;
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -20,7 +19,6 @@ export function useWebsocketChat(urlBase: string) {
     }, []);
 
     useEffect(() => {
-        // teardown old WS if token changes or on unmount
         if (wsRef.current) {
             wsRef.current.close();
             wsRef.current = null;

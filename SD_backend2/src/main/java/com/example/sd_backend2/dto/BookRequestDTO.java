@@ -1,5 +1,9 @@
 package com.example.sd_backend2.dto;
 
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+
+
+@JacksonXmlRootElement(localName = "book")
 public class BookRequestDTO {
     private Long bookId;
     private String title;
