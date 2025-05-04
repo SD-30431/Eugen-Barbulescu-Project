@@ -27,9 +27,6 @@ public class BookService {
     private AuthorRepository authorRepository;
 
     @Autowired
-    private SimpMessagingTemplate messagingTemplate;
-
-    @Autowired
     private CategoryService categoryService;
 
     public BookRequestDTO createBook(BookRequestDTO bookRequest, String username) {
@@ -48,7 +45,6 @@ public class BookService {
         Set<Author> followers = currentAuthor.getFollowers();
         for (Author follower : followers) {
             BookNotificationDTO notification = new BookNotificationDTO(currentAuthor.getName(), savedBook.getTitle(), savedBook.getBookId());
-            messagingTemplate.convertAndSend("/topic/notifications/" + follower.getAuthorId(), notification);
         }
         return convertToDTO(savedBook);
     }

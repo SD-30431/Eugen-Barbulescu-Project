@@ -1,21 +1,31 @@
 package com.example.sd_backend2.security;
 
+import com.example.sd_backend2.websockets.JwtHandshakeInterceptor;
+import com.example.sd_backend2.websockets.UserWebSocketHandler;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
-@EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+@EnableWebSocket
+public class WebSocketConfig implements WebSocketConfigurer {
 
-    @Override
-    public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic");
-        config.setApplicationDestinationPrefixes("/app");
+    private final UserWebSocketHandler userWebSocketHandler;
+    private final JwtTokenUtil jwtTokenUtil;
+    private final CustomUserDetailsService userDetailsService;
+
+    public WebSocketConfig(UserWebSocketHandler handler,
+                           JwtTokenUtil jwtTokenUtil,
+                           CustomUserDetailsService userDetailsService) {
+        this.userWebSocketHandler = handler;
+        this.jwtTokenUtil = jwtTokenUtil;
+        this.userDetailsService = userDetailsService;
     }
 
     @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry
+                .addHandler(userWebSocketHandler, "/ws")
+                .addInterceptors(new JwtHandshakeInterceptor(jwtTokenUtil, userDetailsService))
+                .setAllowedOriginPatterns("*");
     }
 }

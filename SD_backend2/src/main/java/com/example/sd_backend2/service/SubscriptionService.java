@@ -1,5 +1,6 @@
 package com.example.sd_backend2.service;
 
+import com.example.sd_backend2.dto.SubscriberDTO;
 import com.example.sd_backend2.dto.SubscriptionDTO;
 import com.example.sd_backend2.model.Author;
 import com.example.sd_backend2.repository.AuthorRepository;
@@ -65,4 +66,18 @@ public class SubscriptionService {
                 .map(author -> new SubscriptionDTO(author.getAuthorId(), author.getName()))
                 .collect(Collectors.toList());
     }
+
+    public List<SubscriberDTO> getSubscribers(String username) {
+        Author author = authorRepository.findByName(username);
+        if (author == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Author not found");
+        }
+
+        Set<Author> followers = author.getFollowers();
+
+        return followers.stream()
+                .map(follower -> new SubscriberDTO(follower.getAuthorId(), follower.getName()))
+                .collect(Collectors.toList());
+    }
+
 }

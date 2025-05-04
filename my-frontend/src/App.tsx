@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import {Routes, Route, BrowserRouter} from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from "./pages/SingupPage";
@@ -11,10 +11,11 @@ import NotFoundPage from './pages/NotFoundPage';
 import NavBar from './components/NavBar';
 import PrivateRoute from './components/PrivateRoute';
 import AuthorPage from "./pages/AuthorPage.tsx";
+import {ChatWindow} from "./pages/ChatWindow.tsx";
 
 const App: React.FC = () => {
     return (
-        <>
+        <BrowserRouter>
             <NavBar />
             <Routes>
                 <Route path="/" element={<HomePage />} />
@@ -46,9 +47,17 @@ const App: React.FC = () => {
                         </PrivateRoute>
                     }
                 />
+                <Route
+                    path="/chat"
+                    element={
+                        <PrivateRoute>
+                            <ChatWindow />
+                        </PrivateRoute>
+                    }
+                />
                 <Route path="*" element={<NotFoundPage />} />
             </Routes>
-        </>
+        </BrowserRouter>
     );
 };
 

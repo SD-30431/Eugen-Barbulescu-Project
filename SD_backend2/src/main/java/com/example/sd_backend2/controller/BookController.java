@@ -1,7 +1,9 @@
 package com.example.sd_backend2.controller;
 
 import com.example.sd_backend2.dto.BookRequestDTO;
+import com.example.sd_backend2.repository.AuthorRepository;
 import com.example.sd_backend2.service.BookService; // Import the BookService
+import com.example.sd_backend2.service.NotificationHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,11 +20,18 @@ public class BookController {
     @Autowired
     private BookService bookService;
 
+    @Autowired
+    private AuthorRepository authorRepository;
+
     @PostMapping
     public ResponseEntity<BookRequestDTO> createBook(@RequestBody BookRequestDTO bookRequest) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
         BookRequestDTO createdBook = bookService.createBook(bookRequest, username);
+
+        Long authorId = authorRepository.findByName(username).getAuthorId();
+//        notificationService.notifySubscribersOfNewPublication(authorId);
+
         return ResponseEntity.ok(createdBook);
     }
 
