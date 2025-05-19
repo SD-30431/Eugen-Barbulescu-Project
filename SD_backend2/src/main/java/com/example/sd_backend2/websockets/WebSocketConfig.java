@@ -1,7 +1,7 @@
-package com.example.sd_backend2.security;
+package com.example.sd_backend2.websockets;
 
-import com.example.sd_backend2.websockets.JwtHandshakeInterceptor;
-import com.example.sd_backend2.websockets.UserWebSocketHandler;
+import com.example.sd_backend2.security.CustomUserDetailsService;
+import com.example.sd_backend2.security.JwtTokenUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.*;
 
